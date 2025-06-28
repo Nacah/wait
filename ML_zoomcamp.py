@@ -104,5 +104,14 @@ del df_train['msrp']
 del df_val['msrp']  *** Удаление Созданных стобцов из датафрейма чтобы случайно не использовать их
 del df_test['msrp']
 
+def train_linear_regression(X, y):
+    ones = np.ones(X.shape[0])
+    X = np.column_stack([ones, X])
+
+    XTX = X.T.dot(X)
+    XTX_inv = np.linalg.inv(XTX)
+    w = XTX_inv.dot(X.T).dot(y)
+    
+    return w[0], w[1:] 
 
 """    

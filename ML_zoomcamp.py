@@ -4,7 +4,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-
+"""
 df = pd.read_csv('https://raw.githubusercontent.com/alexeygrigorev/mlbookcamp-code/master/chapter-02-car-price/data.csv')
 
 df.columns = df.columns.str.lower().str.replace(' ', '_')  #Работа с названиями колонок, уменшили буквы и поставили нижний пробел для читабельности
@@ -12,7 +12,7 @@ strings = list(df.dtypes[df.dtypes == "object"].index)  # обозначили �
 for col in strings:
     df[col] = df[col].str.lower().str.replace(' ', '_')  #Работа с элементами колонок, уменьшили буквы и поставили нижний пробел для читабельности
 
-"""
+
     df[col].unique() #-> return a list of unique values in the series
 df[col].nunique() #-> return the number of unique values in the series
 df.isnull().sum() #-> return the number of null values in the dataframe
@@ -204,7 +204,7 @@ def train_linear_regression(X, y):
     
     return w[0], w[1:] # Нулевой вес и весы признаков
 print(train_linear_regression(X,y))
-"""
+
 
 np.random.seed(2) #** Закрепоение рандомно разбросанного датафрейма
 
@@ -270,6 +270,59 @@ plt.ylabel('Frequency')
 plt.xlabel('Log(Price + 1)')
 plt.title('Predictions vs actual distribution')
 
+///Root Mean Squared Error///
+
+у нас есть array с реальными значениями цен и с предсказанными ценами, нужно найти ошибку между ними
+Мы от предсказанных значений отнимаем реальные значения, возводим в квадрат, суммируем все значения и делим на кол-во значений, после чего берем корень из полученного числа
+def rmse(y, y_pred):
+    error = y_pred - y
+    mse = (error ** 2).mean()
+    return np.sqrt(mse)
+
+X_val = prepare_X(df_val)
+y_pred = w_0 + X_val.dot(w)
+rmse(y_val, y_pred)
+
+### Featue engineering ###
+#** Feature engineering это процесс создания новых признаков из имеющихся, чтобы улучшить качество модели
+#** Например, можно создать новый признак, который будет представлять собой возраст машины, вычитая год выпуска из текущего года
+
+def prepare_X(df):
+    df = df.copy() ===> # Создаем копию датафрейма, чтобы не изменять оригинал
+    features = base.copy()
+
+    df['age'] = 2017 - df.year
+    features.append('age')
+
+    df_num = df[features]
+    df_num = df_num.fillna(0)
+    X = df_num.values
+    return X
+X_train = prepare_X(df_train)
+w_0, w = train_linear_regression(X_train, y_train)
+
+y_pred = w_0 + X_train.dot(w)
+print('train', rmse(y_train, y_pred))
+
+X_val = prepare_X(df_val)
+y_pred = w_0 + X_val.dot(w)
+print('validation', rmse(y_val, y_pred))
+train 0.5175055465840046
+validation 0.5172055461058335
+plt.figure(figsize=(6, 4))
+
+
+sns.histplot(y_val, label='target', color='#222222', alpha=0.6, bins=40)
+sns.histplot(y_pred, label='prediction', color='#aaaaaa', alpha=0.8, bins=40)
+
+plt.legend()
+
+plt.ylabel('Frequency')
+plt.xlabel('Log(Price + 1)')
+plt.title('Predictions vs actual distribution')
+
+plt.show()
+"""
 
 
 

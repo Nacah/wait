@@ -4,11 +4,15 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-"""
-df = pd.read_csv('https://raw.githubusercontent.com/alexeygrigorev/mlbookcamp-code/master/chapter-02-car-price/data.csv')
 
-df.columns = df.columns.str.lower().str.replace(' ', '_')  #Работа с названиями колонок, уменшили буквы и поставили нижний пробел для читабельности
-strings = list(df.dtypes[df.dtypes == "object"].index)  # обозначили какие колонки меют строковые значения
+df = pd.read_csv('https://raw.githubusercontent.com/alexeygrigorev/mlbookcamp-code/master/chapter-02-car-price/data.csv')
+"""
+df.columns = df.columns.str.lower().str.replace(' ', '_')  #Работа с названиями колонок, уменшили регистры и поставили нижний пробел для читабельности
+strings = list(df.dtypes[df.dtypes == "object"].index)  # обозначили какие колонки имеют строковые значения
+print(df.dtypes[df.dtypes == "object"])   # какие колонки имеют класс object
+print(df.dtypes[df.dtypes == "object"].index)   #Index(['make', 'model', 'engine_fuel_type', 'transmission_type','driven_wheels', 'market_category', 'vehicle_size', 'vehicle_style'],dtype='object')
+print(strings)   # ['make', 'model', 'engine_fuel_type', 'transmission_type', 'driven_wheels', 'market_category', 'vehicle_size', 'vehicle_style']
+
 for col in strings:
     df[col] = df[col].str.lower().str.replace(' ', '_')  #Работа с элементами колонок, уменьшили буквы и поставили нижний пробел для читабельности
 
@@ -76,7 +80,7 @@ dtype: int64
 1. Нужно найти 60%, 20% и 20% процентов данных в числовом формате т.е. сколько это записей будет
 2. Данные нужно рандомно разбросать для большей точности потому что данные построены по порядку марки автомобиля
 
-np.random.seed(2) ** Закрепоение рандомно разбросанного датафрейма
+np.random.seed(2) ** Закрепление рандомно разбросанного датафрейма
 
 n = len(df) ** Кол.во записей
 
@@ -251,13 +255,13 @@ def train_linear_regression(X, y):
 
 base = ['engine_hp', 'engine_cylinders', 'highway_mpg', 'city_mpg', 'popularity']
 
-def prepare_X(df):    # Функция отвечающая за подготовку матрицы признаков в частности за заполнение пустых значений нулями
+def prepare_X_fill_nulls(df):    # Функция отвечающая за подготовку матрицы признаков в частности за заполнение пустых значений нулями
     df_num = df[base]  
     df_num = df_num.fillna(0) # Заполнение пустых значений нулями
     X = df_num.values
     return X
 X_train = prepare_X(df_train)  # Заполнение пустых значений
-w_0, w = train_linear_regression(X_train, y_train) # Использование моделиб вычисление весов
+w_0, w = train_linear_regression(X_train, y_train) # Использование модели вычисление весов
 y_pred = w_0 + X_train.dot(w)  # Предположение суммы
 plt.figure(figsize=(6, 4))
 
@@ -283,11 +287,11 @@ X_val = prepare_X(df_val)
 y_pred = w_0 + X_val.dot(w)
 rmse(y_val, y_pred)
 
-### Featue engineering ###
+### Feature engineering ###
 #** Feature engineering это процесс создания новых признаков из имеющихся, чтобы улучшить качество модели
 #** Например, можно создать новый признак, который будет представлять собой возраст машины, вычитая год выпуска из текущего года
 
-def prepare_X(df):
+def prepare_X_adding_age(df):
     df = df.copy() ===> # Создаем копию датафрейма, чтобы не изменять оригинал
     features = base.copy()
 
@@ -308,7 +312,8 @@ X_val = prepare_X(df_val)
 y_pred = w_0 + X_val.dot(w)
 print('validation', rmse(y_val, y_pred))
 train 0.5175055465840046
-validation 0.5172055461058335
+validation 0.5172055461058335 ===> уменьшение ошибки
+
 plt.figure(figsize=(6, 4))
 
 
@@ -318,10 +323,219 @@ sns.histplot(y_pred, label='prediction', color='#aaaaaa', alpha=0.8, bins=40)
 plt.legend()
 
 plt.ylabel('Frequency')
-plt.xlabel('Log(Price + 1)')
+plt.xlabel('Log(Price + 1)')    
 plt.title('Predictions vs actual distribution')
 
 plt.show()
+
+# Categorical values 
+df['make'].value_counts().head(5) ===> выдает самые распространенные 5 марок машин
+
+def prepare_X(df): 
+    df = df.copy()
+    features = base.copy()
+
+    df['age'] = 2017 - df.year # добавление "возраста" машины
+    features.append('age')
+    
+    # Дальше идет работа категорными признаками
+    for v in [2, 3, 4]:   # 2,3,4 дверные машины
+        feature = 'num_doors_%s' % v  # %s это место куда будет добавляться цифры из спиcка по порядку и будут созданы новые 3 колонки в таблице признаков
+        df[feature] = (df['number_of_doors'] == v).astype(int) # Проверка на кол.во дверей если правильно тру нет то фолс а затем приведение их в числовой формат (0 или 1)
+        features.append(feature)          # Не смотря на то что кол.во дверей пишет что тип float это все равно категорный признак
+
+    for v in ['chevrolet', 'ford', 'volkswagen', 'toyota', 'dodge']:
+        feature = 'is_make_%s' % v    # %s это место куда будет добавляться элементы из списка по порядку и будут созданы новые колонки
+        df[feature] = (df['make'] == v).astype(int)  # ...
+        features.append(feature)
+
+    for v in ['regular_unleaded', 'premium_unleaded_(required)', 
+              'premium_unleaded_(recommended)', 'flex-fuel_(unleaded/e85)']:
+        feature = 'is_type_%s' % v # ...
+        df[feature] = (df['engine_fuel_type'] == v).astype(int) # ...
+        features.append(feature)
+
+    for v in ['automatic', 'manual', 'automated_manual']:
+        feature = 'is_transmission_%s' % v   # ...
+        df[feature] = (df['transmission_type'] == v).astype(int)  # ...
+        features.append(feature)
+
+    for v in ['front_wheel_drive', 'rear_wheel_drive', 'all_wheel_drive', 'four_wheel_drive']:
+        feature = 'is_driven_wheens_%s' % v  # ...
+        df[feature] = (df['driven_wheels'] == v).astype(int)  # ...
+        features.append(feature)
+
+    for v in ['crossover', 'flex_fuel', 'luxury', 'luxury,performance', 'hatchback']:
+        feature = 'is_mc_%s' % v  # ...
+        df[feature] = (df['market_category'] == v).astype(int)  # ...
+        features.append(feature)
+
+    for v in ['compact', 'midsize', 'large']:
+        feature = 'is_size_%s' % v  # ...
+        df[feature] = (df['vehicle_size'] == v).astype(int)  # ...
+        features.append(feature)
+
+    for v in ['sedan', '4dr_suv', 'coupe', 'convertible', '4dr_hatchback']:
+        feature = 'is_style_%s' % v  # ...
+        df[feature] = (df['vehicle_style'] == v).astype(int)  # ...
+        features.append(feature)
+
+    df_num = df[features]
+    df_num = df_num.fillna(0)
+    X = df_num.values
+    return X
+
+X_train = prepare_X(df_train)
+w_0, w = train_linear_regression(X_train, y_train)
+
+y_pred = w_0 + X_train.dot(w)
+print('train:', rmse(y_train, y_pred))
+
+X_val = prepare_X(df_val)
+y_pred = w_0 + X_val.dot(w)
+print('validation:', rmse(y_val, y_pred))
+
+train: 1607.4898641126447 # ===> Слишком высокие показатели  
+validation: 830.8920785817741 # ===> Слишком высокие показатели  
+    
+Regularization
+
+Регуляризация — это добавление небольшой поправки к Gram матрице, чтобы она стала обратимой, особенно если признаки линейно зависимы. 
+Обычно используют λI, где λ — маленькое положительное число (Я ИСПОЛЬЗОВАЛ r), а I — единичная матрица. Это стабилизирует вычисления и снижает переобучение.
+Это называется L2-регуляризация (Ridge regression) и делает задачу численно устойчивой.
+
+
+def train_linear_regression_reg(X, y, r=0.0):  # r это и есть это маленькое число здесь 0 поэтому изменений не будет
+    ones = np.ones(X.shape[0])  
+    X = np.column_stack([ones, X])
+
+    XTX = X.T.dot(X)
+    reg = r * np.eye(XTX.shape[0]) r умножается на единичную матрицу(I)
+    XTX = XTX + reg  складывание единичной матрицы с gram матрицей
+
+    XTX_inv = np.linalg.inv(XTX)
+    w = XTX_inv.dot(X.T).dot(y)
+    
+    return w[0], w[1:]
+
+   
+X_train = prepare_X(df_train)
+w_0, w = train_linear_regression_reg(X_train, y_train, r=0.01)
+y_pred = w_0 + X_train.dot(w)
+print('train', rmse(y_train, y_pred))
+
+
+
+
+for r in [0.000001, 0.0001, 0.001, 0.01, 0.1, 1, 5, 10]:  # Выбор оптимального параметра r
+    w_0, w = train_linear_regression_reg(X_train, y_train, r=r)
+    y_pred = w_0 + X_val.dot(w)
+    print('%6s' %r, rmse(y_val, y_pred))
+ 1e-06 0.4602255729429437
+0.0001 0.4602254945347706
+ 0.001 0.46022676266043516
+  0.01 0.46023949632611183  # Будем использовать эту
+   0.1 0.46037006958137333
+     1 0.46182980426538955
+     5 0.46840796275338076
+    10 0.4757248100693528
+X_train = prepare_X(df_train)
+w_0, w = train_linear_regression_reg(X_train, y_train, r=0.01)
+
+X_val = prepare_X(df_val)
+y_pred = w_0 + X_val.dot(w)
+print('validation:', rmse(y_val, y_pred))
+
+X_test = prepare_X(df_test)
+y_pred = w_0 + X_test.dot(w)
+print('test:', rmse(y_test, y_pred))
+validation: 0.46023949632611183
+test: 0.4571813679692604
+
+Using the model
+
+# Объединяем train и val датасеты чтобы проверить их с релуьтатом датасета test
+df_full_train = pd.concat([df_train,df_val])
+df_full_train = df_full_train.reset_index(drop=True)
+X_full_train = prepare_X(df_full_train)
+y_full_train = np.concatenate([y_train, y_val])
+w_0, w = train_linear_regression_reg(X_full_train, y_full_train, r=0.001)
+
+i = 2
+ad = df_test.iloc[i].to_dict()
+
+ad
+{'make': 'toyota',
+ 'model': 'venza',
+ 'year': 2013,
+ 'engine_fuel_type': 'regular_unleaded',
+ 'engine_hp': 268.0,
+ 'engine_cylinders': 6.0,
+ 'transmission_type': 'automatic',
+ 'driven_wheels': 'all_wheel_drive',
+ 'number_of_doors': 4.0,
+ 'market_category': 'crossover,performance',
+ 'vehicle_size': 'midsize',
+ 'vehicle_style': 'wagon',
+ 'highway_mpg': 25,
+ 'city_mpg': 18,
+ 'popularity': 2031}
+X_test = prepare_X(pd.DataFrame([ad]))[0] # Так как наша функция prepare_X принимает как аргумент только датафреймы мы его конвертируем в датафрейм
+y_pred = w_0 + X_test.dot(w)   # Предсказание цен
+suggestion = np.expm1(y_pred) 
+suggestion
+28294.135912260714
+
+### ИТОГ СЕССИИ ###
+
+# ХРОНОЛОГИЯ ДЕЙСТВИЙ ПРИ РАБОТЕ С МОДЕЛЬЮ ЛИНЕЙНОЙ РЕГРЕССИИ
+
+1. EDA (EXPLORATORY DATA ANALYSIS)
+a. Работа с названиями колонок
+- Уменьшение регистров
+- Простовление нижних пробелов для читабельности
+b. Обозначение какие колонки имеют строковые значения
+c. Работа с элементами колонок, уменьшили буквы и поставили нижний пробел для читабельности (for col in strings: df[col] = df[col].str.lower().str.replace(' ', '_'))
+d. Изучить уникальные и пустые значения ( .unique, .nunique, .isnull(), isnull().sum() )
+e. Изучить хистограмму
+f. Гистограмма оказалась long tail distribution, 
+потому что большинство значений были маленькими, а несколько — очень большими, 
+из-за чего распределение было смещено вправо и несимметрично.
+Чтобы устранить этот дисбаланс и сделать данные ближе к нормальному распределению,
+ мы применили логарифмическое преобразование, которое «сжимает» большие значения и делает распределение более симметричным.
+
+2. ВАЛИДАЦИЯ
+a. Рандомно перемешать датасет
+b. Разделение датасета на 3 части(train, validation, test) df_train = df_shuffled.iloc[:n_train].copy()    ** Часть для обучения модели train df_val = df_shuffled.iloc[n_train:n_train+n_val].copy() ** Часть для валидации df_test = df_shuffled.iloc[n_train+n_val:].copy()  ** Часть для теста
+
+3. ОБУЧЕНИЕ МОДЕЛИ
+a. Вычисление весов(w) с помощью нормального уравнения 
+b. Создание baseline модели на основе числовых признаков
+c. Проверка модели с помощью RMSE делать это с каждой частью датасета
+d. Feature engineering
+   Feature engineering: Это процесс создания, преобразования или отбора признаков (features) из имеющихся данных с целью улучшения работы модели
+e. Работа с категорными признаками:
+Например скажем у нас есть категорный признак марка машины: 
+ for v in ['chevrolet', 'ford', 'volkswagen', 'toyota', 'dodge']:
+        feature = 'is_make_%s' % v    # %s это место куда будет добавляться элементы из списка по порядку и будут созданы новые колонки
+        df[feature] = (df['make'] == v).astype(int)  # ...
+        features.append(feature)
+Этот код создаёт новые бинарные признаки (0 или 1) для каждого значения из категориального признака make.
+Для каждой марки (chevrolet, ford, и т.д.) создаётся отдельный столбец is_make_марка, который показывает, относится ли машина к этой марке (1 — да, 0 — нет).
+Это пример one-vs-rest кодирования, при котором каждая марка превращается в отдельный бинарный столбец.
+
+4. REGULARIZATION
+Регуляризация — это добавление небольшой поправки к Gram матрице, чтобы она стала обратимой, особенно если признаки линейно зависимы. 
+Обычно используют λI, где λ — маленькое положительное число (Я ИСПОЛЬЗОВАЛ r), а I — единичная матрица. Это стабилизирует вычисления и снижает переобучение.
+Это называется L2-регуляризация (Ridge regression) и делает задачу численно устойчивой.
+
+5. ИСПОЛЬЗОВАНИЕ МОДЕЛИ
+a. Объединение train и val датасетов и использование модели (Вывести веса, RMSE и предсказанной цены)
+b. Использование модели на test датасете (Вывести веса, RMSE и предсказанной цены)
+c. Сравнение значений
+
+
+
 """
 
 

@@ -179,7 +179,7 @@ data = [
     ['GMC', 'Acadia',  2017, 194, 4, 'AUTOMATIC', '4dr SUV', 34450],
     ['Nissan', 'Frontier', 2017, 261, 6, 'MANUAL', 'Pickup', 32340],
 ]
- 
+
 columns = [
     'Make', 'Model', 'Year', 'Engine HP', 'Engine Cylinders',
     'Transmission Type', 'Vehicle_Style', 'MSRP'
@@ -346,3 +346,30 @@ df.to_dict(orient='records')
 .........
 
 """ 
+X_learning_normal_equation= [
+[148, 24, 1385],
+[132, 25, 2031],
+[453, 11, 86],
+[158, 24, 185],
+[172, 25, 201],
+[413, 11, 86],
+[38, 54, 185],
+[142, 25, 431],
+[453, 31, 86],
+]
+X_learning_normal_equation_array = np.array(X_learning_normal_equation)
+y = [100, 200, 150, 250, 100, 200, 150, 250, 120]
+def train_linear_regression(X, y):
+
+    ones = np.ones(X.shape[0])  # Создание столбца нулевых признаков из единиц
+
+    X = np.column_stack([ones, X])  # Добавление столбца нулевых признаков из единиц
+
+    XTX = X.T.dot(X) # Создание gram matrix транспонированная матрица умноженная на оригинальную матрицу
+
+    XTX_inv = np.linalg.inv(XTX) # Инвертирование gram matrix
+
+    w = XTX_inv.dot(X.T).dot(y) # Вычисление весов
+    
+    return w[0], w[1:] # Нулевой вес и весы признаков
+print(train_linear_regression(X_learning_normal_equation_array,y))

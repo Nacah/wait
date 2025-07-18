@@ -12,7 +12,7 @@ strings = list(df.dtypes[df.dtypes == "object"].index)  # обозначили �
 print(df.dtypes[df.dtypes == "object"])   # какие колонки имеют класс object
 print(df.dtypes[df.dtypes == "object"].index)   #Index(['make', 'model', 'engine_fuel_type', 'transmission_type','driven_wheels', 'market_category', 'vehicle_size', 'vehicle_style'],dtype='object')
 print(strings)   # ['make', 'model', 'engine_fuel_type', 'transmission_type', 'driven_wheels', 'market_category', 'vehicle_size', 'vehicle_style']
-
+  
 for col in strings:
     df[col] = df[col].str.lower().str.replace(' ', '_')  #Работа с элементами колонок, уменьшили буквы и поставили нижний пробел для читабельности
 
@@ -181,7 +181,7 @@ w = (XT*X)**-1 * XT * y ===> ###ЭТО УРАВНЕНИЕ ДАЕТ НАМ САМ
 
 #** NORMAL EQUATION В ПАЙТОНЕ 
 
-X = [
+X_learning_normal_equation= [
 [148, 24, 1385],
 [132, 25, 2031],
 [453, 11, 86],
@@ -192,19 +192,19 @@ X = [
 [142, 25, 431],
 [453, 31, 86],
 ]
-X = np.array(X)
+X_learning_normal_equation_array = np.array(X_learning_normal_equation)
 y = [100, 200, 150, 250, 100, 200, 150, 250, 120]
 def train_linear_regression(X, y):
 
-    ones = np.ones(X.shape[0])  # Создание столбца нулевых признаков из единиц
+    ones = np.ones(X_learning_normal_equation_array.shape[0])  # Создание столбца нулевых признаков из единиц
 
-    X = np.column_stack([ones, X])  # Добавление столбца нулевых признаков из единиц
+    X_learning_normal_equation_array = np.column_stack([ones, X_learning_normal_equation_array])  # Добавление столбца нулевых признаков из единиц
 
-    XTX = X.T.dot(X) # Создание gram matrix транспонированная матрица умноженная на оригинальную матрицу
+    XTX = X_learning_normal_equation_array.T.dot(X_learning_normal_equation_array) # Создание gram matrix транспонированная матрица умноженная на оригинальную матрицу
 
     XTX_inv = np.linalg.inv(XTX) # Инвертирование gram matrix
 
-    w = XTX_inv.dot(X.T).dot(y) # Вычисление весов
+    w = XTX_inv.dot(X_learning_normal_equation_array.T).dot(y) # Вычисление весов
     
     return w[0], w[1:] # Нулевой вес и весы признаков
 print(train_linear_regression(X,y))
@@ -508,8 +508,8 @@ f. Гистограмма оказалась long tail distribution,
 a. Рандомно перемешать датасет
 b. Разделение датасета на 3 части(train, validation, test) df_train = df_shuffled.iloc[:n_train].copy()    ** Часть для обучения модели train df_val = df_shuffled.iloc[n_train:n_train+n_val].copy() ** Часть для валидации df_test = df_shuffled.iloc[n_train+n_val:].copy()  ** Часть для теста
 
-3. ОБУЧЕНИЕ МОДЕЛИ
-a. Вычисление весов(w) с помощью нормального уравнения 
+3. ОБУЧов(wЕНИЕ МОДЕЛИ
+a. Вычисление вес) с помощью нормального уравнения 
 b. Создание baseline модели на основе числовых признаков
 c. Проверка модели с помощью RMSE делать это с каждой частью датасета
 d. Feature engineering
